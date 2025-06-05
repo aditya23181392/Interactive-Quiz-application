@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quiz Application</title>
+<style>
+  :root {
+    --primary-color: #4f46e5;
+    --correct-color: #22c55e;
+    --wrong-color: #ef4444;
+    --bg-color: #f9fafb;
+    --text-color: #1f2937;
+    --btn-bg: #6366f1;
+    --btn-hover-bg: #4f46e5;
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 1rem;
+  }
+  .container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 480px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+  .scoreboard {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    text-align: right;
+    color: var(--primary-color);
+  }
+  .progress {
+    text-align: left;
+    font-weight: 600;
+    margin-bottom:1rem;
+    color: var(--primary-color);
+  }
+  .question {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    min-height: 68px;
+  }
+  .answers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .answer-btn {
+    background: var(--btn-bg);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(99,102,241,0.4);
+    transition: background-color 0.3s ease;
+    user-select: none;
+    text-align: left;
+  }
+  .answer-btn:hover:not(:disabled) {
+    background: var(--btn-hover-bg);
+  }
+  .answer-btn.correct {
+    background-color: var(--correct-color);
+    box-shadow: 0 4px 6px rgba(34,197,94,0.7);
+    cursor: default;
+  }
+  .answer-btn.wrong {
+    background-color: var(--wrong-color);
+    box-shadow: 0 4px 6px rgba(239,68,68,0.7);
+    cursor: default;
+  }
+  .feedback {
+    font-weight: 600;
+    font-size: 1.1rem;
+    min-height: 28px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    height: 28px;
+    color: var(--primary-color);
+  }
+  .next-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    font-weight: 700;
+    box-shadow: 0 5px 15px rgba(79,70,229,0.5);
+    user-select: none;
+    transition: background-color 0.3s ease;
+  }
+  .next-btn:hover {
+    background: #4338ca;
+  }
+  .next-btn:disabled {
+    background: #a5b4fc;
+    cursor: default;
+    box-shadow: none;
+  }
+  .final-score {
+    font-size: 1.4rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+  .restart-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.8rem 1.2rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    font-weight: 700;
+    box-shadow: 0 5px 15px rgba(79,70,229,0.5);
+    user-select: none;
+    transition: background-color 0.3s ease;
+    display: block;
+    margin: 0 auto;
+  }
+  .restart-btn:hover {
+    background: #4338ca;
+  }
+  @media (max-width: 520px) {
+    .container {
+      padding: 1.5rem;
+    }
+    h1 {
+      font-size: 1.8rem;
+    }
+    .question {
+      font-size: 1.15rem;
+    }
+    .answer-btn {
+      font-size: 0.95rem;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container" role="main" aria-labelledby="quiz-title">
+    <h1 id="quiz-title">Interactive Quiz application</h1>
+    <div class="scoreboard" aria-live="polite">Score: <span id="score">0</span></div>
+    <div class="progress" aria-live="polite">Question <span id="current-question">1</span> / <span id="total-questions">5</span></div>
+    <div class="question" id="question-text" tabindex="0"></div>
+    <div class="answers" id="answers-container"></div>
+    <div class="feedback" id="feedback" aria-live="assertive"></div>
+    <button class="next-btn" id="next-btn" disabled>Next Question</button>
+    <div id="final-screen" hidden>
+      <div class="final-score" id="final-score-text"></div>
+      <button class="restart-btn" id="restart-btn">Restart Quiz</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "Which built-in method calls a function for each element in an array?",
+        answers: ["while()", "loop()", "forEach()", "None of the above"],
+        correct: 2
+      },
+      {
+        question: "Which JavaScript keyword is used to declare a variable?",
+        answers: ["var", "let", "const", "All of the above"],
+        correct: 3
+      },
+      {
+        question: "Inside which HTML element do we put the JavaScript?",
+        answers: ["<style>", "<script>", "<js>", "<javascript>"],
+        correct: 1
+      },
+      {
+        question: "What is the correct syntax for referring to an external script called 'script.js'?",
+        answers: ["<script href='script.js'>", "<script name='script.js'>", "<script src='script.js'>", "<script file='script.js'>"],
+        correct: 2
+      },
+      {
+        question: "How do you write 'Hello World' in an alert box?",
+        answers: ["msg('Hello World');", "alertBox('Hello World');", "msgBox('Hello World');", "alert('Hello World');"],
+        correct: 3
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    const totalQuestions = questions.length;
+
+    const questionTextEl = document.getElementById('question-text');
+    const answersContainer = document.getElementById('answers-container');
+    const feedbackEl = document.getElementById('feedback');
+    const scoreEl = document.getElementById('score');
+    const currentQuestionEl = document.getElementById('current-question');
+    const totalQuestionsEl = document.getElementById('total-questions');
+    const nextBtn = document.getElementById('next-btn');
+    const finalScreen = document.getElementById('final-screen');
+    const finalScoreText = document.getElementById('final-score-text');
+    const restartBtn = document.getElementById('restart-btn');
+
+    totalQuestionsEl.textContent = totalQuestions;
+
+    function loadQuestion() {
+      clearFeedback();
+      nextBtn.disabled = true;
+      const currentQuestion = questions[currentQuestionIndex];
+      questionTextEl.textContent = currentQuestion.question;
+      currentQuestionEl.textContent = currentQuestionIndex + 1;
+      answersContainer.innerHTML = '';
+
+      currentQuestion.answers.forEach((answer, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn';
+        btn.textContent = answer;
+        btn.setAttribute('type', 'button');
+        btn.dataset.index = index;
+        btn.addEventListener('click', () => selectAnswer(index));
+        answersContainer.appendChild(btn);
+      });
+    }
+
+    function clearFeedback() {
+      feedbackEl.textContent = '';
+    }
+
+    function selectAnswer(selectedIndex) {
+      const currentQuestion = questions[currentQuestionIndex];
+      const answerButtons = answersContainer.querySelectorAll('button');
+      nextBtn.disabled = false;
+
+      // Disable all buttons after selection
+      answerButtons.forEach((btn, idx) => {
+        btn.disabled = true;
+        if (idx === currentQuestion.correct) {
+          btn.classList.add('correct');
+        }
+      });
+
+      const selectedBtn = answerButtons[selectedIndex];
+      if (selectedIndex === currentQuestion.correct) {
+        score++;
+        scoreEl.textContent = score;
+        feedbackEl.textContent = 'Correct! 🎉';
+        feedbackEl.style.color = 'var(--correct-color)';
+        selectedBtn.classList.add('correct');
+      } else {
+        feedbackEl.textContent = `Wrong! The correct answer was: "${currentQuestion.answers[currentQuestion.correct]}"`;
+        feedbackEl.style.color = 'var(--wrong-color)';
+        selectedBtn.classList.add('wrong');
+      }
+    }
+
+    nextBtn.addEventListener('click', () => {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < totalQuestions) {
+        loadQuestion();
+      } else {
+        showFinalScore();
+      }
+    });
+
+    function showFinalScore() {
+      questionTextEl.hidden = true;
+      answersContainer.hidden = true;
+      feedbackEl.hidden = true;
+      nextBtn.hidden = true;
+      finalScreen.hidden = false;
+      finalScoreText.textContent = `You scored ${score} out of ${totalQuestions}!`;
+    }
+
+    restartBtn.addEventListener('click', () => {
+      currentQuestionIndex = 0;
+      score = 0;
+      scoreEl.textContent = score;
+      questionTextEl.hidden = false;
+      answersContainer.hidden = false;
+      feedbackEl.hidden = false;
+      nextBtn.hidden = false;
+      finalScreen.hidden = true;
+      loadQuestion();
+    });
+
+    // Initialize first question
+    loadQuestion();
+  </script>
+</body>
+</html>
+
